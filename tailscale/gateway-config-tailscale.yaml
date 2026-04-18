@@ -1,0 +1,12 @@
+# Gateway configuration, using Tailscale as a LoadBalancer provider
+apiVersion: cilium.io/v2alpha1
+kind: CiliumGatewayClassConfig
+
+metadata:
+  name: tailscale
+  namespace: tailscale
+
+spec:
+  service:
+    type: LoadBalancer
+    loadBalancerClass: tailscale
