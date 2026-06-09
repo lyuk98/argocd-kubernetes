@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsidp
+  namespace: tailscale
+  labels:
+    app: tsidp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tsidp
+  template:
+    metadata:
+      labels:
+        app: tsidp
+    spec:
+      containers:
+      - name: tsidp
+        image: ghcr.io/tailscale/tsidp:latest
+        ports:
+        - containerPort: 443
+        env:
+          # Acknowledge the use of experimental code
+          - name: TAILSCALE_USE_WIP_CODE
+            value: "1"
+          # Set hostname
+          - name: TS_HOSTNAME
+            value: idp
+          - name: TSIDP_HOSTNAME
+            value: idp
+          # Set port
+          - name: TSIDP_PORT
+            value: "443"
+          # Enable OAuth token exchange
+          - name: TSIDP_ENABLE_STS
+            value: "1"
