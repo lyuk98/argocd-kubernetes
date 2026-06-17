@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tsidp-pvc
+  namespace: tailscale
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: longhorn
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsidp
+  namespace: tailscale
+  labels:
+    app: tsidp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tsidp
+  template:
+    metadata:
+      labels:
+        app: tsidp
+    spec:
+      initContainers:
+        - name: fix-state-dir-permissions
+          image: busybox:uclibc
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Fixing user permissions in /var/lib/tsidp..."
+              chown -R 1001:1001 /var/lib/tsidp
+              echo "Done."
+          volumeMounts:
+            - name: tsidp-data
+              mountPath: /var/lib/tsidp
+      containers:
+        - name: tsidp
+          image: ghcr.io/tailscale/tsidp:latest
+          ports:
+            - containerPort: 443
+          env:
+            # Acknowledge the use of experimental code
+            - name: TAILSCALE_USE_WIP_CODE
+              value: "1"
+            # Set path for persistent tsnet and tsidp state
+            - name: TS_STATE_DIR
+              value: /data
+            - name: TSIDP_STATE_DIR
+              value: /data
+            # Set hostname
+            - name: TS_HOSTNAME
+              value: idp
+            - name: TSIDP_HOSTNAME
+              value: idp
+            # Set port
+            - name: TSIDP_PORT
+              value: "443"
+            # Enable OAuth token exchange
+            - name: TSIDP_ENABLE_STS
+              value: "1"
+          volumeMounts:
+            - name: tsidp-data
+              mountPath: /data
+      volumes:
+        - name: tsidp-data
+          persistentVolumeClaim:
+            claimName: tsidp-pvc

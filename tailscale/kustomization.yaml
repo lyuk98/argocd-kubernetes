@@ -9,3 +9,4 @@ resources:
   - gateway-class-tailscale.yaml
   - gateway-config-tailscale.yaml
   - gateway-tailscale.yaml
+  - tsidp.yaml
